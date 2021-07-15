@@ -4,6 +4,18 @@ if config_env() in [:dev, :test] do
   Envy.auto_load()
 end
 
+# Listen IP supports IPv4 and IPv6 addresses.
+listen_ip = (
+  str = System.get_env("LISTEN_IP") || "0.0.0.0"
+  case :inet.parse_address(String.to_charlist(str)) do
+    {:ok, ip_addr} ->
+      ip_addr
+
+    {:error, reason} ->
+      raise "Invalid LISTEN_IP '#{str}' error: #{inspect(reason)}"
+  end
+)
+
 port = System.get_env("PORT") || 8000
 
 base_url = System.get_env("BASE_URL")
@@ -103,7 +115,7 @@ config :plausible, :selfhost,
 
 config :plausible, PlausibleWeb.Endpoint,
   url: [host: base_url.host, scheme: base_url.scheme, port: base_url.port],
-  http: [port: port],
+  http: [port: port, ip: listen_ip],
   secret_key_base: secret_key_base
 
 config :plausible, Plausible.Repo, url: db_url
